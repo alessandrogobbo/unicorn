@@ -1,56 +1,41 @@
 import React from 'react';
 //@ToDo: definire PropTypes
-import PropTypes from 'prop-types';
-
+//import PropTypes from 'parop-types';
+import Item from './Item'
+import ProductRepository from './ProductRepository'
 
 class Main extends React.Component{ 
   constructor(props){
     super(props);
-    this.handleLike=this.handleLike.bind(this);
-    
-  }
-  state = {
-    //le proprietà statiche nell'array potrebbero non servire
-    products:[
-      {
-      id: "1000a",
-      name: 'Prodotto test',
-      img: 'https://placeimg.com/300/250/nature',
-      like: false,
-      dislike: false
-      },
-      {
-      id: "1000b",
-      name: 'Prodotto test 2',
-      img: 'https://placeimg.com/300/250/nature',
-      like: false,
-      dislike: false
-      }
-    ]
+    this.handleLike = this.handleLike.bind(this);
+
+    // This one can be a service? (Singleton?)
+    this.productRepository = new ProductRepository();
+    let products = this.productRepository.findAll();
+
+    let items = products.map(product => {
+        return Item.makeFromProduct(product);
+    });    
+
+    this.state = {
+      items: items
+    };
   }
 
-  handleLike (prodIndex){
-    /**
-     * @ToDO: 
-     * 1) Usare splice 
-     * 2) {!dislike && newProduct.like=true}
-     */
+  state = {}
 
-    //Setup Immutable Object, non modifico lo stato originale
-    const newProduct = this.state.products[prodIndex];
-    newProduct.like=true;
-    
-    console.log(newProduct)
-    //Shallow merge
+  handleLike (itemIndex, liked){
+    const newItem = this.state.items[itemIndex];
+    liked ? newItem.like() : newItem.dislike();
+
     this.setState({
-      ...this.state.products,
-      newProduct
-    })
+      ...this.state.items,
+      newItem
+    });
+
+    console.log(this.state);
   }
-
-
   
-
   render(){
 
     //@ToDo: Refactor = <Block/> -> <Block products={products}/> -> {map}
@@ -58,20 +43,19 @@ class Main extends React.Component{
       <React.Fragment>
         <div className="Main-block">
           <div className="Main-block__items">
-          {this.state.products.map (product => {
+          {this.state.items.map (item => {
               return (
-                <div key={product.id} className="Product-block">
-                  <div className="Product-block__title">
-                    <h2>{product.name}</h2>
+                <div key={item.id} className="Item-block">
+                  <div className="Item-block__title">
+                    <h2>{item.name}</h2>
                   </div>
-                  <div className="Product-block__image">
-                    <h2><img src={product.img} alt={product.name} /></h2>
+                  <div className="Item-block__image">
+                    <h2><img src={item.getImageUrl()} alt={item.name} /></h2>
                   </div>
-                  <div className="Product-block__likes">
-                    {product.like && `like`}
-                    <button className="Like" onClick={()=>(this.handleLike(this.state.products.indexOf(product)))}> Like </button>
-                    {product.dislike && `dislike`}
-                    <button className="DisLike"> Dislike </button>
+                  <div className="Item-block__likes">
+                    <p>{item.getStatus()}</p>
+                    <button className="Like" onClick={()=>(this.handleLike(this.state.items.indexOf(item), true))}> Like </button>
+                    <button className="DisLike" onClick={()=>(this.handleLike(this.state.items.indexOf(item), false))}> Dislike </button>
                   </div>
                 </div>
               )
